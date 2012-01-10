@@ -71,12 +71,13 @@ class NeighborsBase(BaseEstimator):
     # rely on soon-to-be-updated functionality in the pairwise module.
     def _init_params(self, n_neighbors=None, radius=None,
                      algorithm='auto', leaf_size=30,
-                     warn_on_equidistant=True):
+                     warn_on_equidistant=True, p=2):
         self.n_neighbors = n_neighbors
         self.radius = radius
         self.algorithm = algorithm
         self.leaf_size = leaf_size
         self.warn_on_equidistant = warn_on_equidistant
+	self.p = p
 
         if algorithm not in ['auto', 'brute', 'kd_tree', 'ball_tree']:
             raise ValueError("unrecognized algorithm: '%s'" % algorithm)
@@ -131,7 +132,7 @@ class NeighborsBase(BaseEstimator):
         if self._fit_method == 'kd_tree':
             self._tree = cKDTree(X, self.leaf_size)
         elif self._fit_method == 'ball_tree':
-            self._tree = BallTree(X, self.leaf_size)
+            self._tree = BallTree(X, self.leaf_size, self.p)
         elif self._fit_method == 'brute':
             self._tree = None
         else:
@@ -202,7 +203,7 @@ class KNeighborsMixin(object):
             n_neighbors = self.n_neighbors
 
         if self._fit_method == 'brute':
-            dist = euclidean_distances(X, self._fit_X, squared=True)
+            dist = pairwise_distances(X, self._fit_X, metric='minkowski', p=p)
             # XXX: should be implemented with a partial sort
             neigh_ind = dist.argsort(axis=1)
             if self.warn_on_equidistant and n_neighbors < self._fit_X.shape[0]:
@@ -224,7 +225,7 @@ class KNeighborsMixin(object):
                 warn_equidistant()
             return result
         elif self._fit_method == 'kd_tree':
-            dist, ind = self._tree.query(X, n_neighbors)
+            dist, ind = self._tree.query(X, n_neighbors, p=p)
             # kd_tree returns a 1D array for n_neighbors = 1
             if n_neighbors == 1:
                 dist = dist[:, None]
