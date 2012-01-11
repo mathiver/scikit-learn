@@ -16,6 +16,8 @@ from ..base import BaseEstimator
 from ..metrics import euclidean_distances, pairwise_distances
 from ..utils import safe_asarray, atleast2d_or_csr
 
+def print_h():
+	print 'hello!'
 
 def warn_equidistant():
     msg = ("kneighbors: neighbor k+1 and neighbor k have the same "
@@ -373,10 +375,9 @@ class RadiusNeighborsMixin(object):
 	    if self.p == 2:
                 dist = euclidean_distances(X, self._fit_X, squared=False)
             else:
-                dist = pairwise_distances(X, self._fit_X, metric='minkowski', p=p)
-            rad2 = radius ** 2
+                dist = pairwise_distances(X, self._fit_X, metric='minkowski', p=p)	    
 
-            neigh_ind = [np.where(d < rad2)[0] for d in dist]
+            neigh_ind = [np.where(d < radius)[0] for d in dist]
 
             # if there are the same number of neighbors for each point,
             # we can do a normal array.  Otherwise, we return an object
