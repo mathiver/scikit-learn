@@ -13,7 +13,7 @@ from scipy.spatial.ckdtree import cKDTree
 
 from .ball_tree import BallTree
 from ..base import BaseEstimator
-from ..metrics import euclidean_distances
+from ..metrics import euclidean_distances, pairwise_distances
 from ..utils import safe_asarray, atleast2d_or_csr
 
 
@@ -203,7 +203,10 @@ class KNeighborsMixin(object):
             n_neighbors = self.n_neighbors
 
         if self._fit_method == 'brute':
-            dist = pairwise_distances(X, self._fit_X, metric='minkowski', p=p)
+	    if self.p == 2:
+		dist = euclidean_distances(X, self._fit_X, squared=False)
+	    else:
+		dist = pairwise_distances(X, self._fit_X, metric='minkowski', p=p)
             # XXX: should be implemented with a partial sort
             neigh_ind = dist.argsort(axis=1)
             if self.warn_on_equidistant and n_neighbors < self._fit_X.shape[0]:
@@ -215,7 +218,7 @@ class KNeighborsMixin(object):
             neigh_ind = neigh_ind[:, :n_neighbors]
             if return_distance:
                 j = np.arange(neigh_ind.shape[0])[:, None]
-                return np.sqrt(dist[j, neigh_ind]), neigh_ind
+                return dist[j, neigh_ind], neigh_ind
             else:
                 return neigh_ind
         elif self._fit_method == 'ball_tree':
@@ -367,7 +370,10 @@ class RadiusNeighborsMixin(object):
             radius = self.radius
 
         if self._fit_method == 'brute':
-            dist = euclidean_distances(X, self._fit_X, squared=True)
+	    if self.p == 2:
+                dist = euclidean_distances(X, self._fit_X, squared=False)
+            else:
+                dist = pairwise_distances(X, self._fit_X, metric='minkowski', p=p)
             rad2 = radius ** 2
 
             neigh_ind = [np.where(d < rad2)[0] for d in dist]
@@ -383,7 +389,7 @@ class RadiusNeighborsMixin(object):
                 dtype_F = object
 
             if return_distance:
-                dist = np.array([np.sqrt(d[neigh_ind[i]]) \
+                dist = np.array([d[neigh_ind[i]] \
                                      for i, d in enumerate(dist)],
                                 dtype=dtype_F)
                 return dist, neigh_ind
