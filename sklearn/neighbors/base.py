@@ -228,7 +228,7 @@ class KNeighborsMixin(object):
                 warn_equidistant()
             return result
         elif self._fit_method == 'kd_tree':
-            dist, ind = self._tree.query(X, n_neighbors, p=p)
+            dist, ind = self._tree.query(X, n_neighbors, p=self.p)
             # kd_tree returns a 1D array for n_neighbors = 1
             if n_neighbors == 1:
                 dist = dist[:, None]
